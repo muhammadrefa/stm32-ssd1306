@@ -49,6 +49,19 @@ void ssd1306_WriteData(uint8_t* buffer, size_t buff_size) {
 }
 
 #elif defined(SSD1306_SIMULATE_CONSOLE)
+void ssd1306_Reset(void) {
+    /* for I2C - do nothing */
+}
+
+// Send a byte to the command register
+void ssd1306_WriteCommand(uint8_t byte) {
+    
+}
+
+// Send data
+void ssd1306_WriteData(uint8_t* buffer, size_t buff_size) {
+    
+}
 #else
 #error "You should define SSD1306_USE_SPI or SSD1306_USE_I2C macro"
 #endif
@@ -76,7 +89,9 @@ void ssd1306_Init(void) {
     ssd1306_Reset();
 
     // Wait for the screen to boot
+#ifndef SSD1306_SIMULATE_CONSOLE
     HAL_Delay(100);
+#endif
 
     // Init OLED
     ssd1306_SetDisplayOn(0); //display off
@@ -235,6 +250,34 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
         SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] |= 1 << (y % 8);
     } else { 
         SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] &= ~(1 << (y % 8));
+    }
+
+    // printf("draw x %3d y %3d byte %3d bit %d\n", x, y, (x + (y / 8) * SSD1306_WIDTH), (y%8));
+}
+
+void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t height, uint8_t* buffer, SSD1306_COLOR color)
+{
+    printf("draw block\n");
+    if (pos_y % 8 || height % 8)
+    {
+        printf("Unsupported!\n");
+        return;
+    }
+    printf("x %d y %d w %d h %d %d\n", pos_x, pos_y, width, height, SSD1306_HEIGHT/8);
+
+
+    for (uint8_t y = pos_y/8, h = 0; (y < SSD1306_HEIGHT/8 && h < height); y++, h++)
+    {
+      printf("%02d ", y);
+      for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
+      {
+        printf("%d %d %d\n", y, x, x + (y / 8) * SSD1306_WIDTH);
+        uint8_t data = buffer[w + (h/8)];
+        if (color == Black)
+            data ^= 0xFF;
+        SSD1306_Buffer[x + y * SSD1306_WIDTH] |= data;
+      }
+    //   printf("\n");
     }
 }
 
@@ -460,6 +503,72 @@ void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
   ssd1306_Line(x1,y2,x1,y1,color);
 
   return;
+}
+
+void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
+    uint8_t width, height;
+    width = x2-x1+1;
+    height = y2-y1+1;
+    // printf("w %d h %d\n", width, height);
+    if (height % 8)
+    {
+        printf("Unsupported!\n");
+        return;
+    }
+    uint8_t buff[width * (height/8)];
+    memset(buff, NULL, sizeof(buff));
+    // printf("buff size %d\n", sizeof(buff));
+    // for (uint8_t i=0; i<sizeof(buff); i++)
+    //     printf("%02X ", buff[i]);
+    // printf("\n");
+    // Top and bottom line
+    for (uint8_t x = 0; x < width; x++)
+    {
+        buff[x + 0] |= 0x01;
+        buff[x + height-1] |= 0x80;
+    }
+    // Left and right line
+    for (uint8_t y = 0; y < (height/8); y++)
+    {
+        // printf("%d %d %02X %02X", (x1+y), (x2+y), buff[x1 + y], buff[x2 + y]);
+        buff[0 + y] |= 0xFF;
+        buff[width-1 + y] |= 0xFF;
+        // printf(" %02X %02X\n", buff[x1 + y], buff[x2 + y]);
+    }
+    // for (uint8_t i=0; i<sizeof(buff); i++)
+    //     printf("%02X ", buff[i]);
+    // printf("\n");
+    ssd1306_DrawBlock(x1, y1, width, height, buff, color);
+
+  return;
+}
+
+// Draw filled rectangle
+void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
+    for (uint8_t y = y2; y >= y1; y--) {
+        for (uint8_t x = x2; x >= x1; x--) {
+            ssd1306_DrawPixel(x, y, color);
+        }
+    }
+    return;
+}
+
+// Draw filled rectangle
+void ssd1306_FillRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
+    uint8_t width, height;
+    width = x2-x1+1;
+    height = y2-y1+1;
+    printf("w %d h %d\n", width, height);
+    if (height % 8)
+    {
+        printf("Unsupported!\n");
+        return;
+    }
+    uint8_t buff[width * (height/8)];
+    for (uint8_t i=0; i<sizeof(buff); i++)
+        buff[i] = 0xFF;
+    ssd1306_DrawBlock(x1, y1, width, height, buff, color);
+    return;
 }
 
 //Draw bitmap - ported from the ADAFruit GFX library

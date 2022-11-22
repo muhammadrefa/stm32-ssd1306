@@ -13,11 +13,10 @@
 
 #ifndef SSD1306_SIMULATE_CONSOLE
 #include <_ansi.h>
+_BEGIN_STD_C
 #else
 #include <stdio.h>
 #endif
-
-_BEGIN_STD_C
 
 #if defined(STM32F0)
 #include "stm32f0xx_hal.h"
@@ -158,6 +157,9 @@ void ssd1306_DrawArc(uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle,
 void ssd1306_DrawCircle(uint8_t par_x, uint8_t par_y, uint8_t par_r, SSD1306_COLOR color);
 void ssd1306_Polyline(const SSD1306_VERTEX *par_vertex, uint16_t par_size, SSD1306_COLOR color);
 void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
+void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
+void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
+void ssd1306_FillRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
 void ssd1306_DrawBitmap(uint8_t x, uint8_t y, const unsigned char* bitmap, uint8_t w, uint8_t h, SSD1306_COLOR color);
 /**
  * @brief Sets the contrast of the display.
@@ -184,6 +186,8 @@ void ssd1306_WriteCommand(uint8_t byte);
 void ssd1306_WriteData(uint8_t* buffer, size_t buff_size);
 SSD1306_Error_t ssd1306_FillBuffer(uint8_t* buf, uint32_t len);
 
+#ifndef SSD1306_SIMULATE_CONSOLE
 _END_STD_C
+#endif
 
 #endif // __SSD1306_H__
