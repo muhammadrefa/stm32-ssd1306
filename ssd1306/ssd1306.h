@@ -9,11 +9,15 @@
 #define __SSD1306_H__
 
 #include <stddef.h>
+#include "ssd1306_conf.h"
+
+#ifndef SSD1306_SIMULATE_CONSOLE
 #include <_ansi.h>
+#else
+#include <stdio.h>
+#endif
 
 _BEGIN_STD_C
-
-#include "ssd1306_conf.h"
 
 #if defined(STM32F0)
 #include "stm32f0xx_hal.h"
@@ -38,6 +42,7 @@ _BEGIN_STD_C
 #include "stm32g0xx_hal.h"
 #elif defined(STM32G4)
 #include "stm32g4xx_hal.h"
+#elif defined(SSD1306_SIMULATE_CONSOLE)
 #else
 #error "SSD1306 library was tested only on STM32F0, STM32F1, STM32F3, STM32F4, STM32F7, STM32L0, STM32L1, STM32L4, STM32H7, STM32G0, STM32G4 MCU families. Please modify ssd1306.h if you know what you are doing. Also please send a pull request if it turns out the library works on other MCU's as well!"
 #endif
@@ -97,6 +102,7 @@ _BEGIN_STD_C
 extern I2C_HandleTypeDef SSD1306_I2C_PORT;
 #elif defined(SSD1306_USE_SPI)
 extern SPI_HandleTypeDef SSD1306_SPI_PORT;
+#elif defined(SSD1306_SIMULATE_CONSOLE)
 #else
 #error "You should define SSD1306_USE_SPI or SSD1306_USE_I2C macro!"
 #endif

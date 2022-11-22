@@ -48,6 +48,7 @@ void ssd1306_WriteData(uint8_t* buffer, size_t buff_size) {
     HAL_GPIO_WritePin(SSD1306_CS_Port, SSD1306_CS_Pin, GPIO_PIN_SET); // un-select OLED
 }
 
+#elif defined(SSD1306_SIMULATE_CONSOLE)
 #else
 #error "You should define SSD1306_USE_SPI or SSD1306_USE_I2C macro"
 #endif
@@ -189,12 +190,34 @@ void ssd1306_UpdateScreen(void) {
     //  * 32px   ==  4 pages
     //  * 64px   ==  8 pages
     //  * 128px  ==  16 pages
+#ifndef SSD1306_SIMULATE_CONSOLE
     for(uint8_t i = 0; i < SSD1306_HEIGHT/8; i++) {
         ssd1306_WriteCommand(0xB0 + i); // Set the current RAM page address.
         ssd1306_WriteCommand(0x00 + SSD1306_X_OFFSET_LOWER);
         ssd1306_WriteCommand(0x10 + SSD1306_X_OFFSET_UPPER);
         ssd1306_WriteData(&SSD1306_Buffer[SSD1306_WIDTH*i],SSD1306_WIDTH);
     }
+#else
+    printf("----------\n");
+
+    for (uint8_t y = 0; y < (SSD1306_HEIGHT); y++)
+    {
+      printf("%02d ", y);
+      for (uint8_t x = 0; x < (SSD1306_WIDTH); x++)
+      {
+          // printf("%d %d\n", y, x);
+        // uint8_t data = SSD1306_Buffer[arr_pos];
+        uint8_t data = SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH];
+        if (data & (1 << (y % 8)))
+          printf("O");
+        else
+          printf(" ");
+      }
+      printf("\n");
+    }
+
+    printf("----------\n");
+#endif
 }
 
 //    Draw one pixel in the screenbuffer
