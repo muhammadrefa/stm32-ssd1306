@@ -215,6 +215,27 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
     }
 }
 
+// Draw block
+void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t height, uint8_t* buffer, SSD1306_COLOR color)
+{
+    if (pos_y % 8 || height % 8)
+    {
+        // Unsupported
+        return;
+    }
+
+    for (uint8_t y = pos_y/8, h = 0; (y < SSD1306_HEIGHT/8 && h < height/8); y++, h++)
+    {
+      for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
+      {
+        uint8_t data = buffer[w + h];
+        if (color == Black)
+            data ^= 0xFF;
+        SSD1306_Buffer[x + y * SSD1306_WIDTH] |= data;
+      }
+    }
+}
+
 // Draw 1 char to the screen buffer
 // ch       => char om weg te schrijven
 // Font     => Font waarmee we gaan schrijven
@@ -438,6 +459,59 @@ void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
 
   return;
 }
+
+// Draw rectangle using DrawBlock function
+void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
+    uint8_t width, height;
+    width = x2-x1+1;
+    height = y2-y1+1;
+
+    if (height % 8)
+    {
+        // Unsupported
+        return;
+    }
+
+    uint8_t buff[width * (height/8)];
+    memset(buff, NULL, sizeof(buff));
+    
+    // Top and bottom line
+    for (uint8_t x = 0; x < width; x++)
+    {
+        buff[x + 0] |= 0x01;
+        buff[x + (height/8)-1] |= 0x80;
+    }
+
+    // Left and right line
+    for (uint8_t y = 0; y < (height/8); y++)
+    {
+        buff[0 + y] |= 0xFF;
+        buff[width-1 + y] |= 0xFF;
+    }
+    ssd1306_DrawBlock(x1, y1, width, height, buff, color);
+
+  return;
+}
+
+// Draw filled rectangle using DrawBlock function
+void ssd1306_FillRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
+    uint8_t width, height;
+    width = x2-x1+1;
+    height = y2-y1+1;
+    
+    if (height % 8)
+    {
+        // Unsupported
+        return;
+    }
+    
+    uint8_t buff[width * (height/8)];
+    for (uint8_t i=0; i<sizeof(buff); i++)
+        buff[i] = 0xFF;
+    ssd1306_DrawBlock(x1, y1, width, height, buff, color);
+    return;
+}
+
 
 //Draw bitmap - ported from the ADAFruit GFX library
 
