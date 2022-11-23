@@ -266,13 +266,14 @@ void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t heig
     printf("x %d y %d w %d h %d %d\n", pos_x, pos_y, width, height, SSD1306_HEIGHT/8);
 
 
-    for (uint8_t y = pos_y/8, h = 0; (y < SSD1306_HEIGHT/8 && h < height); y++, h++)
+    for (uint8_t y = pos_y/8, h = 0; (y < SSD1306_HEIGHT/8 && h < height/8); y++, h++)
     {
-      printf("%02d ", y);
+    //   printf("%02d ", y);
       for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
       {
-        printf("%d %d %d\n", y, x, x + (y / 8) * SSD1306_WIDTH);
-        uint8_t data = buffer[w + (h/8)];
+        uint8_t data = buffer[w + h];
+        if (data)
+            printf("pos %d %d %d %02X\n", y, x, x + (y) * SSD1306_WIDTH, data);
         if (color == Black)
             data ^= 0xFF;
         SSD1306_Buffer[x + y * SSD1306_WIDTH] |= data;
@@ -525,7 +526,7 @@ void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
     for (uint8_t x = 0; x < width; x++)
     {
         buff[x + 0] |= 0x01;
-        buff[x + height-1] |= 0x80;
+        buff[x + (height/8)-1] |= 0x80;
     }
     // Left and right line
     for (uint8_t y = 0; y < (height/8); y++)
