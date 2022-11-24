@@ -272,7 +272,7 @@ void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t heig
     // printf("data");
     for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
     {
-        printf(" |%d %02X %02X|", w, buffer[w], (uint8_t)(buffer[w] << y_carry));
+        // printf(" |%d %02X %02X|", w, buffer[w], (uint8_t)(buffer[w] << y_carry));
         if (color == White)
             SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] |= buffer[w] << y_carry;
         else
@@ -539,35 +539,47 @@ void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
 }
 
 void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
-    uint8_t width, height;
+    uint8_t width, height, h_carry, h_ceil;
     width = x2-x1+1;
     height = y2-y1+1;
-    // printf("w %d h %d\n", width, height);
-    if (height % 8)
-    {
-        printf("Unsupported!\n");
-        return;
-    }
-    uint8_t buff[width * (height/8)];
+    h_carry = height % 8;
+    h_ceil = height + (8 - h_carry);
+    printf("w %d h %d %d c %d\n", width, height, h_ceil, h_carry);
+    // if (height % 8)
+    // {
+    //     printf("Unsupported!\n");
+    //     return;
+    // }
+    uint8_t buff[width * (h_ceil/8)];
     memset(buff, NULL, sizeof(buff));
-    // printf("buff size %d\n", sizeof(buff));
-    // for (uint8_t i=0; i<sizeof(buff); i++)
-    //     printf("%02X ", buff[i]);
-    // printf("\n");
+    printf("buff size %d ", sizeof(buff));
+    for (uint8_t i=0; i<sizeof(buff); i++)
+        printf("%02X ", buff[i]);
+    printf("\n");
+
+    printf("bottom %d %d\n", ((h_ceil-8)/8)*width, width-1 + ((h_ceil-8)/8)*width);
     // Top and bottom line
     for (uint8_t x = 0; x < width; x++)
     {
         buff[x + 0] |= 0x01;
-        buff[x + (height/8)-1] |= 0x80;
+        buff[x + ((h_ceil-8)/8)*width] |= (0x80 >> h_carry);
     }
+    printf("buff size %d ", sizeof(buff));
+    for (uint8_t i=0; i<sizeof(buff); i++)
+        printf("%02X ", buff[i]);
+    printf("\n");
     // Left and right line
-    for (uint8_t y = 0; y < (height/8); y++)
+    for (uint8_t y = 0; y < h_ceil; y+=8)
     {
         // printf("%d %d %02X %02X", (x1+y), (x2+y), buff[x1 + y], buff[x2 + y]);
-        buff[0 + y] |= 0xFF;
-        buff[width-1 + y] |= 0xFF;
+        // buff[0 + y] |= 0xFF;
+        // buff[width-1 + y] |= 0xFF;
         // printf(" %02X %02X\n", buff[x1 + y], buff[x2 + y]);
     }
+    uint8_t line = pow(2, h_carry+1)-1;
+    // buff[0 + h_ceil/8*width] |= line;
+    // buff[width-1 + h_ceil/8*width] |= line;
+
     printf("buff (%d)", sizeof(buff));
     for (uint8_t i=0; i<sizeof(buff); i++)
         printf(" %02X", buff[i]);

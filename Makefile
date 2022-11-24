@@ -1,4 +1,5 @@
 CFLAGS=-Wall -I.
+LDFLAGS=-lm
 
 SOURCES=\
     main.c \
@@ -30,11 +31,11 @@ all: $(SOURCES) $(OUTPUT)
 
 .c.o :
 	@mkdir -p $(OBJ_DIR)$(@D)
-	$(CXX) -c $< $(CFLAGS) -o $(OBJ_DIR)$@
+	$(CC) -c $< $(CFLAGS) -o $(OBJ_DIR)$@
 
 $(OUTPUT): $(OBJECTS)
 	@mkdir -p $(BIN_DIR)$(@D)
-	$(CXX) -o $(BIN_DIR)$(OUTPUT) $(LDFLAGS) $(addprefix $(OBJ_DIR), $^)
+	$(CC) -o $(BIN_DIR)$(OUTPUT) $(LDFLAGS) $(addprefix $(OBJ_DIR), $^)
 
 .PHONY:
 	all clean
