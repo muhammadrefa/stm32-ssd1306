@@ -258,28 +258,60 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
 void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t height, uint8_t* buffer, SSD1306_COLOR color)
 {
     printf("draw block\n");
-    if (pos_y % 8 || height % 8)
-    {
-        printf("Unsupported!\n");
-        return;
-    }
+    // if (pos_y % 8 || height % 8)
+    // {
+    //     printf("Unsupported!\n");
+    //     return;
+    // }
     printf("x %d y %d w %d h %d %d\n", pos_x, pos_y, width, height, SSD1306_HEIGHT/8);
 
+    uint8_t y_carry = pos_y % 8;
+    
+    // First y
+    // printf("first x %d %d w %d shl %d buff %d\n", pos_x, SSD1306_WIDTH, width, y_carry, (pos_x + (pos_y-y_carry)/8 * SSD1306_WIDTH));
+    // printf("data");
+    for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
+    {
+        printf(" |%d %02X %02X|", w, buffer[w], (uint8_t)(buffer[w] << y_carry));
+        if (color == White)
+            SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] |= buffer[w] << y_carry;
+        else
+            SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] &= ~(buffer[w] << y_carry);
+    }
+    // printf("\n");
 
-    for (uint8_t y = pos_y/8, h = 0; (y < SSD1306_HEIGHT/8 && h < height/8); y++, h++)
+    // Next y
+    // printf("next y %d %d h %d %d\n", pos_y+(8-y_carry), SSD1306_HEIGHT, 8, (height-8));
+    for (uint8_t y = pos_y+(8-y_carry), h = 8; (y < SSD1306_HEIGHT && h < (height - 8)); y+=8, h+=8)
     {
     //   printf("%02d ", y);
       for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
       {
-        uint8_t data = buffer[w + h];
-        if (data)
-            printf("pos %d %d %d %02X\n", y, x, x + (y) * SSD1306_WIDTH, data);
-        if (color == Black)
-            data ^= 0xFF;
-        SSD1306_Buffer[x + y * SSD1306_WIDTH] |= data;
+        uint8_t data = (buffer[w + ((h-8)/8)*width] >> (8-y_carry)) | (buffer[w + (h/8)*width] << y_carry);
+        // if (data)
+        //     printf("pos %d %d %d %d %02X\n", y, y/8, x, x + (y/8) * SSD1306_WIDTH, data);
+        if (color == White)
+            SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] |= data;
+        else
+            SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] &= ~(data);
       }
     //   printf("\n");
     }
+    
+    
+    // Last y
+    // printf("last x %d %d w %d shr %d buff %d\n", pos_x, SSD1306_WIDTH, width, (8-y_carry), (pos_x + (pos_y+height-y_carry)/8*SSD1306_WIDTH));
+    // printf("data");
+    for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
+    {
+        // printf(" |%d %02X %02X|", w + ((height-y_carry)/8)*width, buffer[w + ((height-y_carry)/8)*width], buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry));
+        if (color == White)
+            SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] |= buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry);
+        else
+            SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] &= ~(buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry));
+    }
+    // printf("\n");
+    
 }
 
 // Draw 1 char to the screen buffer
@@ -536,9 +568,10 @@ void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
         buff[width-1 + y] |= 0xFF;
         // printf(" %02X %02X\n", buff[x1 + y], buff[x2 + y]);
     }
-    // for (uint8_t i=0; i<sizeof(buff); i++)
-    //     printf("%02X ", buff[i]);
-    // printf("\n");
+    printf("buff (%d)", sizeof(buff));
+    for (uint8_t i=0; i<sizeof(buff); i++)
+        printf(" %02X", buff[i]);
+    printf("\n");
     ssd1306_DrawBlock(x1, y1, width, height, buff, color);
 
   return;

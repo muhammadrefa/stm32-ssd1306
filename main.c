@@ -44,7 +44,8 @@ int main()
 
     printf("draw rect block\n");
     // ssd1306_DrawRectangle(15, 16, 70, 24, White);
-    ssd1306_DrawRectangle_Block(2, 16, 10, 23, White);
+    ssd1306_DrawRectangle_Block(2, 18, 10, 25, White);
+    ssd1306_DrawRectangle_Block(5, 22, 15, 29, White);
     // ssd1306_UpdateScreen();
     // ssd1306_DrawRectangle_Block(5, 16, 10, 23, White);
     // ssd1306_FillRectangle(15, 16, 70, 24, White);
