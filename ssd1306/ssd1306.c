@@ -218,21 +218,37 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
 // Draw block
 void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t height, uint8_t* buffer, SSD1306_COLOR color)
 {
-    if (pos_y % 8 || height % 8)
+    uint8_t y_carry = pos_y % 8;
+    
+    // First y
+    for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
     {
-        // Unsupported
-        return;
+        if (color == White)
+            SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] |= buffer[w] << y_carry;
+        else
+            SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] &= ~(buffer[w] << y_carry);
     }
 
-    for (uint8_t y = pos_y/8, h = 0; (y < SSD1306_HEIGHT/8 && h < height/8); y++, h++)
+    // Next y
+    for (uint8_t y = pos_y+(8-y_carry), h = 8; (y < SSD1306_HEIGHT && h < (height - 8)); y+=8, h+=8)
     {
       for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
       {
-        uint8_t data = buffer[w + h];
-        if (color == Black)
-            data ^= 0xFF;
-        SSD1306_Buffer[x + y * SSD1306_WIDTH] |= data;
+        uint8_t data = (buffer[w + ((h-8)/8)*width] >> (8-y_carry)) | (buffer[w + (h/8)*width] << y_carry);
+        if (color == White)
+            SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] |= data;
+        else
+            SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] &= ~(data);
       }
+    }
+    
+    // Last y
+    for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
+    {
+        if (color == White)
+            SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] |= buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry);
+        else
+            SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] &= ~(buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry));
     }
 }
 
