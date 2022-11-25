@@ -230,7 +230,7 @@ void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t heig
     }
 
     // Next y
-    for (uint8_t y = pos_y+(8-y_carry), h = 8; (y < SSD1306_HEIGHT && h < (height - 8)); y+=8, h+=8)
+    for (uint8_t y = pos_y+(8-y_carry), h = 8; (y < SSD1306_HEIGHT && h < height); y+=8, h+=8)
     {
       for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
       {
