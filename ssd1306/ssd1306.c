@@ -268,49 +268,52 @@ void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t heig
     uint8_t y_carry = pos_y % 8;
     
     // First y
-    // printf("first x %d %d w %d shl %d buff %d\n", pos_x, SSD1306_WIDTH, width, y_carry, (pos_x + (pos_y-y_carry)/8 * SSD1306_WIDTH));
-    // printf("data");
+    printf("first x %d %d w %d shl %d buff %d\n", pos_x, SSD1306_WIDTH, width, y_carry, (pos_x + (pos_y-y_carry)/8 * SSD1306_WIDTH));
+    printf("data");
     for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
     {
-        // printf(" |%d %02X %02X|", w, buffer[w], (uint8_t)(buffer[w] << y_carry));
+        printf(" |%d %02X %02X|", w, buffer[w], (uint8_t)(buffer[w] << y_carry));
         if (color == White)
             SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] |= buffer[w] << y_carry;
         else
             SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] &= ~(buffer[w] << y_carry);
     }
-    // printf("\n");
+    printf("\n");
 
     // Next y
-    // printf("next y %d %d h %d %d\n", pos_y+(8-y_carry), SSD1306_HEIGHT, 8, (height-8));
-    for (uint8_t y = pos_y+(8-y_carry), h = 8; (y < SSD1306_HEIGHT && h < (height - 8)); y+=8, h+=8)
+    printf("next y %d %d h %d %d shr %d shl %d\n", pos_y+(8-y_carry), SSD1306_HEIGHT, 8, height, (8-y_carry), y_carry);
+    for (uint8_t y = pos_y+(8-y_carry), h = 8; (y < SSD1306_HEIGHT && h < height); y+=8, h+=8)
     {
     //   printf("%02d ", y);
       for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
       {
+        printf("%02d buff %d data", y, (x + y/8 * SSD1306_WIDTH));
         uint8_t data = (buffer[w + ((h-8)/8)*width] >> (8-y_carry)) | (buffer[w + (h/8)*width] << y_carry);
+        printf(" |%d %02X %02X %02X|", x, buffer[w + ((h-8)/8)*width], buffer[w + (h/8)*width], data);
         // if (data)
         //     printf("pos %d %d %d %d %02X\n", y, y/8, x, x + (y/8) * SSD1306_WIDTH, data);
         if (color == White)
             SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] |= data;
         else
             SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] &= ~(data);
+        printf("\n");
       }
     //   printf("\n");
     }
     
     
     // Last y
-    // printf("last x %d %d w %d shr %d buff %d\n", pos_x, SSD1306_WIDTH, width, (8-y_carry), (pos_x + (pos_y+height-y_carry)/8*SSD1306_WIDTH));
-    // printf("data");
+    printf("last x %d %d w %d shr %d buff %d\n", pos_x, SSD1306_WIDTH, width, (8-y_carry), (pos_x + (pos_y+height-y_carry)/8*SSD1306_WIDTH));
+    printf("data");
     for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
     {
-        // printf(" |%d %02X %02X|", w + ((height-y_carry)/8)*width, buffer[w + ((height-y_carry)/8)*width], buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry));
+        printf(" |%d %02X %02X|", w + ((height-y_carry)/8)*width, buffer[w + ((height-y_carry)/8)*width], buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry));
         if (color == White)
             SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] |= buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry);
         else
             SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] &= ~(buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry));
     }
-    // printf("\n");
+    printf("\n");
     
 }
 
@@ -543,7 +546,7 @@ void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
     width = x2-x1+1;
     height = y2-y1+1;
     h_carry = height % 8;
-    h_ceil = height + (8 - h_carry);
+    h_ceil = height + (h_carry ? (8 - h_carry) : 0);
     printf("w %d h %d %d c %d\n", width, height, h_ceil, h_carry);
     // if (height % 8)
     // {
@@ -561,18 +564,18 @@ void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
     // Top and bottom line
     for (uint8_t x = 0; x < width; x++)
     {
-        buff[x + 0] |= 0x01;
-        buff[x + ((h_ceil-8)/8)*width] |= (0x80 >> h_carry);
+        // buff[x + 0] |= 0x01;
+        // buff[x + ((h_ceil-8)/8)*width] |= (0x80 >> (h_carry ? 8-h_carry : 0));
     }
     printf("buff size %d ", sizeof(buff));
     for (uint8_t i=0; i<sizeof(buff); i++)
         printf("%02X ", buff[i]);
     printf("\n");
     // Left and right line
-    for (uint8_t y = 0; y < h_ceil; y+=8)
+    for (uint8_t y = 0; y < height; y+=8)
     {
         // printf("%d %d %02X %02X", (x1+y), (x2+y), buff[x1 + y], buff[x2 + y]);
-        // buff[0 + y] |= 0xFF;
+        buff[0 + y] |= 0xFF;
         // buff[width-1 + y] |= 0xFF;
         // printf(" %02X %02X\n", buff[x1 + y], buff[x2 + y]);
     }
