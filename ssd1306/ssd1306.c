@@ -478,35 +478,35 @@ void ssd1306_DrawRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
 
 // Draw rectangle using DrawBlock function
 void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
-    uint8_t width, height;
+    uint8_t width, height, h_carry, h_ceil;
     width = x2-x1+1;
     height = y2-y1+1;
-
-    if (height % 8)
-    {
-        // Unsupported
-        return;
-    }
-
-    uint8_t buff[width * (height/8)];
+    h_carry = height % 8;
+    h_ceil = height + (h_carry ? (8 - h_carry) : 0);
+    
+    uint8_t buff[width * (h_ceil/8)];
     memset(buff, NULL, sizeof(buff));
     
     // Top and bottom line
     for (uint8_t x = 0; x < width; x++)
     {
         buff[x + 0] |= 0x01;
-        buff[x + (height/8)-1] |= 0x80;
+        buff[x + ((h_ceil-8)/8)*width] |= (0x80 >> (h_carry ? 8-h_carry : 0));
     }
-
+    
     // Left and right line
-    for (uint8_t y = 0; y < (height/8); y++)
+    for (uint8_t y = 0; y < height-h_carry; y+=8)
     {
-        buff[0 + y] |= 0xFF;
-        buff[width-1 + y] |= 0xFF;
+        buff[0 + y/8*width] |= 0xFF;
+        buff[width-1 + y/8*width] |= 0xFF;
     }
+    uint8_t line = pow(2, h_carry)-1;
+    buff[0 + (h_ceil-8)/8*width] |= line;
+    buff[width-1 + (h_ceil-8)/8*width] |= line;
+
     ssd1306_DrawBlock(x1, y1, width, height, buff, color);
 
-  return;
+    return;
 }
 
 // Draw filled rectangle using DrawBlock function
