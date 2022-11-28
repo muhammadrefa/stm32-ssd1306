@@ -564,24 +564,26 @@ void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
     // Top and bottom line
     for (uint8_t x = 0; x < width; x++)
     {
-        // buff[x + 0] |= 0x01;
-        // buff[x + ((h_ceil-8)/8)*width] |= (0x80 >> (h_carry ? 8-h_carry : 0));
+        buff[x + 0] |= 0x01;
+        buff[x + ((h_ceil-8)/8)*width] |= (0x80 >> (h_carry ? 8-h_carry : 0));
     }
     printf("buff size %d ", sizeof(buff));
     for (uint8_t i=0; i<sizeof(buff); i++)
         printf("%02X ", buff[i]);
     printf("\n");
     // Left and right line
-    for (uint8_t y = 0; y < height; y+=8)
+    for (uint8_t y = 0; y < height-h_carry; y+=8)
     {
+        // printf("y %d\n", y);
         // printf("%d %d %02X %02X", (x1+y), (x2+y), buff[x1 + y], buff[x2 + y]);
-        buff[0 + y] |= 0xFF;
-        // buff[width-1 + y] |= 0xFF;
+        buff[0 + y/8*width] |= 0xFF;
+        buff[width-1 + y/8*width] |= 0xFF;
         // printf(" %02X %02X\n", buff[x1 + y], buff[x2 + y]);
     }
-    uint8_t line = pow(2, h_carry+1)-1;
-    // buff[0 + h_ceil/8*width] |= line;
-    // buff[width-1 + h_ceil/8*width] |= line;
+    uint8_t line = pow(2, h_carry)-1;
+    // printf("line %02X pos1 %d\n", line, ((h_ceil-8)/8*width));
+    buff[0 + (h_ceil-8)/8*width] |= line;
+    buff[width-1 + (h_ceil-8)/8*width] |= line;
 
     printf("buff (%d)", sizeof(buff));
     for (uint8_t i=0; i<sizeof(buff); i++)
