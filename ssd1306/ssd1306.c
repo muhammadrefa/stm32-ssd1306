@@ -511,19 +511,32 @@ void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
 
 // Draw filled rectangle using DrawBlock function
 void ssd1306_FillRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
-    uint8_t width, height;
+    uint8_t width, height, h_carry, h_ceil;
     width = x2-x1+1;
     height = y2-y1+1;
-    
-    if (height % 8)
+    h_carry = height % 8;
+    h_ceil = height + (h_carry ? (8 - h_carry) : 0);
+    uint8_t mask = pow(2, h_carry)-1;
+    printf("w %d h %d %d c %d mask 0x%02X\n", width, height, h_ceil, h_carry, mask);
+
+    uint8_t buff[width * (h_ceil/8)];
+    memset(buff, NULL, sizeof(buff));
+
+    // Top and middle
+    for (int8_t y = 0; y < height-8; y+=8)
     {
-        // Unsupported
-        return;
+        for (uint8_t x = 0; x < width; x++)
+        {
+            buff[x + (y/8)*width] = 0xFF;
+        }
     }
-    
-    uint8_t buff[width * (height/8)];
-    for (uint8_t i=0; i<sizeof(buff); i++)
-        buff[i] = 0xFF;
+
+    // Bottom
+    for (uint8_t x = 0; x < width; x++)
+    {
+        buff[x + ((h_ceil-8)/8)*width] = 0xFF & mask;
+    }
+
     ssd1306_DrawBlock(x1, y1, width, height, buff, color);
     return;
 }
