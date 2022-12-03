@@ -606,18 +606,42 @@ void ssd1306_FillRectangle(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD13
 
 // Draw filled rectangle
 void ssd1306_FillRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color) {
-    uint8_t width, height;
+    uint8_t width, height, h_carry, h_ceil;
     width = x2-x1+1;
     height = y2-y1+1;
-    printf("w %d h %d\n", width, height);
-    if (height % 8)
+    h_carry = height % 8;
+    h_ceil = height + (h_carry ? (8 - h_carry) : 0);
+    uint8_t mask = pow(2, h_carry)-1;
+    printf("w %d h %d %d c %d mask 0x%02X\n", width, height, h_ceil, h_carry, mask);
+
+    uint8_t buff[width * (h_ceil/8)];
+    memset(buff, NULL, sizeof(buff));
+
+    // Top and middle
+    for (int8_t y = 0; y < height-8; y+=8)
     {
-        printf("Unsupported!\n");
-        return;
+        for (uint8_t x = 0; x < width; x++)
+        {
+            // printf("top y %d x %d idx %d\n", y, x, (x + (y/8)*width));
+            buff[x + (y/8)*width] = 0xFF;
+        }
     }
-    uint8_t buff[width * (height/8)];
-    for (uint8_t i=0; i<sizeof(buff); i++)
-        buff[i] = 0xFF;
+    // printf("top buff (%d)", sizeof(buff));
+    // for (uint8_t i=0; i<sizeof(buff); i++)
+    //     printf(" %02X", buff[i]);
+    // printf("\n");
+
+    // Bottom
+    for (uint8_t x = 0; x < width; x++)
+    {
+        // printf("bot x %d idx %d\n", x, (x + (h_ceil/8)*width));
+        buff[x + ((h_ceil-8)/8)*width] = 0xFF & mask;
+    }
+    // printf("bot buff (%d)", sizeof(buff));
+    // for (uint8_t i=0; i<sizeof(buff); i++)
+    //     printf(" %02X", buff[i]);
+    // printf("\n");
+
     ssd1306_DrawBlock(x1, y1, width, height, buff, color);
     return;
 }
