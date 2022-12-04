@@ -51,7 +51,9 @@ int main()
     // ssd1306_FillRectangle(15, 16, 70, 24, White);
     // ssd1306_FillRectangle_Block(15, 16, 70, 23, White);
     // ssd1306_FillRectangle_Block(115, 16, 129, 23, White);
-    ssd1306_FillRectangle_Block(2, 10, 10, 20, White);
+    ssd1306_FillRectangle_Block(1, 8, 12, 22, White);
+    ssd1306_DrawRectangle_Block(2, 10, 10, 20, Black);
+    // ssd1306_DrawRectangle_Block(7, 7, 20, 15, White);
     ssd1306_UpdateScreen();
     return 0;
 }

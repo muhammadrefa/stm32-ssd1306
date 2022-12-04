@@ -255,7 +255,7 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
     // printf("draw x %3d y %3d byte %3d bit %d\n", x, y, (x + (y / 8) * SSD1306_WIDTH), (y%8));
 }
 
-void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t height, uint8_t* buffer, SSD1306_COLOR color)
+void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t height, uint8_t* buffer, SSD1306_COLOR color, uint8_t use_transparency)
 {
     printf("draw block\n");
     // if (pos_y % 8 || height % 8)
@@ -273,10 +273,18 @@ void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t heig
     for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
     {
         printf(" |%d %02X %02X|", w, buffer[w], (uint8_t)(buffer[w] << y_carry));
+
+        printf(" |%02X", SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH]);
+        if (!use_transparency)
+            SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] &= ~((uint8_t)0xFF << y_carry);
+        printf(" %02X", SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH]);
+
         if (color == White)
             SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] |= buffer[w] << y_carry;
         else
             SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] &= ~(buffer[w] << y_carry);
+
+        printf(" %02X|", SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH]);
     }
     printf("\n");
 
@@ -292,10 +300,18 @@ void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t heig
         printf(" |%d %02X %02X %02X|", x, buffer[w + ((h-8)/8)*width], buffer[w + (h/8)*width], data);
         // if (data)
         //     printf("pos %d %d %d %d %02X\n", y, y/8, x, x + (y/8) * SSD1306_WIDTH, data);
+
+        printf(" |%02X", SSD1306_Buffer[x + y/8 * SSD1306_WIDTH]);
+        if (!use_transparency)
+            SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] = 0x00;
+        printf(" %02X", SSD1306_Buffer[x + y/8 * SSD1306_WIDTH]);
+
         if (color == White)
             SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] |= data;
         else
             SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] &= ~(data);
+        
+        printf(" %02X|", SSD1306_Buffer[x + y/8 * SSD1306_WIDTH]);
         printf("\n");
       }
     //   printf("\n");
@@ -308,10 +324,19 @@ void ssd1306_DrawBlock(uint8_t pos_x, uint8_t pos_y, uint8_t width, uint8_t heig
     for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
     {
         printf(" |%d %02X %02X|", w + ((height-y_carry)/8)*width, buffer[w + ((height-y_carry)/8)*width], buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry));
+
+        printf(" |%02X", SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH]);  
+        // if (!use_transparency)
+        //     SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] &= ~((uint8_t)0xFF >> (8-y_carry));
+        printf(" %02X", SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH]);  
+
         if (color == White)
             SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] |= buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry);
         else
             SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] &= ~(buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry));
+        
+        
+        printf(" %02X|", SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH]);   
     }
     printf("\n");
     
@@ -589,7 +614,7 @@ void ssd1306_DrawRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
     for (uint8_t i=0; i<sizeof(buff); i++)
         printf(" %02X", buff[i]);
     printf("\n");
-    ssd1306_DrawBlock(x1, y1, width, height, buff, color);
+    ssd1306_DrawBlock(x1, y1, width, height, buff, color, 0);
 
   return;
 }
@@ -642,7 +667,7 @@ void ssd1306_FillRectangle_Block(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
     //     printf(" %02X", buff[i]);
     // printf("\n");
 
-    ssd1306_DrawBlock(x1, y1, width, height, buff, color);
+    ssd1306_DrawBlock(x1, y1, width, height, buff, color, 1);
     return;
 }
 
