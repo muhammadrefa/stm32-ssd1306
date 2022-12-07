@@ -571,6 +571,49 @@ void ssd1306_DrawBitmap(uint8_t x, uint8_t y, const unsigned char* bitmap, uint8
     return;
 }
 
+void ssd1306_DrawBitmap2(uint8_t pos_x, uint8_t pos_y, uint8_t* bitmap, uint8_t width, uint8_t height, SSD1306_COLOR color, uint8_t use_transparency)
+{
+    uint8_t y_carry = pos_y % 8;
+    
+    // First y
+    for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
+    {
+        if (!use_transparency)
+            SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] &= ~((uint8_t)0xFF << y_carry);
+    
+        if (color == White)
+            SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] |= buffer[w] << y_carry;
+        else
+            SSD1306_Buffer[x + (pos_y-y_carry)/8 * SSD1306_WIDTH] &= ~(buffer[w] << y_carry);
+    }
+    
+    // Next y
+    for (uint8_t y = pos_y+(8-y_carry), h = 8; (y < SSD1306_HEIGHT && h < height); y+=8, h+=8)
+    {
+      for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
+      {
+        uint8_t data = (buffer[w + ((h-8)/8)*width] >> (8-y_carry)) | (buffer[w + (h/8)*width] << y_carry);
+    
+        if (!use_transparency)
+            SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] = 0x00;
+    
+        if (color == White)
+            SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] |= data;
+        else
+            SSD1306_Buffer[x + y/8 * SSD1306_WIDTH] &= ~(data);
+      }
+    }
+    
+    // Last y
+    for (uint8_t x = pos_x, w = 0; (x < SSD1306_WIDTH && w < width); x++, w++)
+    {
+        if (color == White)
+            SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] |= buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry);
+        else
+            SSD1306_Buffer[x + (pos_y+height-y_carry)/8*SSD1306_WIDTH] &= ~(buffer[w + ((height-y_carry)/8)*width] >> (8-y_carry));        
+    }
+}
+
 void ssd1306_SetContrast(const uint8_t value) {
     const uint8_t kSetContrastControlRegister = 0x81;
     ssd1306_WriteCommand(kSetContrastControlRegister);
